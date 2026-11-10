@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<script src="config.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enemy Pie · Relay Writing 모둠 활동</title>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fdfbf7;--card:#fff;--ink:#4a4a4a;--sub:#7a7a7a;--pri:#d86278;--on-pri:#fff;--pri-bg:#fff8f6;--pri-bd:#ffb7b2;--line:#f0e6df;--ok:#34d399;--ok-d:#059669;--ok-bg:#ecfdf5;--ok-ink:#047857;--in-bd:#a7f3d0;--in-bg:#f0fdf4;--blue:#3b82f6;--blue-bg:#f0f7ff;--blue-bd:#93c5fd;--blue-ink:#1e3a8a;--warn:#b45309;--warn-bg:#fffbea;--warn-bd:#fbbf24;--warn-mk:#fef3c7;--bad:#dc2626;--sh:0 8px 20px rgba(0,0,0,.05);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#1b1818;--card:#262222;--ink:#ece6e3;--sub:#a9a09c;--pri:#ff9aab;--on-pri:#3a1f26;--pri-bg:#3a2428;--pri-bd:#7a4a50;--line:#3c3434;--ok:#34d399;--ok-d:#6ee7b7;--ok-bg:#12302a;--ok-ink:#a7f3d0;--in-bd:#2f6b57;--in-bg:#16251f;--blue:#7db4ff;--blue-bg:#1c2636;--blue-bd:#3d5a85;--blue-ink:#cfe2ff;--warn:#fbbf24;--warn-bg:#352c14;--warn-bd:#8a6a14;--warn-mk:#4a3a12;--bad:#f87171;--sh:0 8px 20px rgba(0,0,0,.3)}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#1b1818;--card:#262222;--ink:#ece6e3;--sub:#a9a09c;--pri:#ff9aab;--on-pri:#3a1f26;--pri-bg:#3a2428;--pri-bd:#7a4a50;--line:#3c3434;--ok:#34d399;--ok-d:#6ee7b7;--ok-bg:#12302a;--ok-ink:#a7f3d0;--in-bd:#2f6b57;--in-bg:#16251f;--blue:#7db4ff;--blue-bg:#1c2636;--blue-bd:#3d5a85;--blue-ink:#cfe2ff;--warn:#fbbf24;--warn-bg:#352c14;--warn-bd:#8a6a14;--warn-mk:#4a3a12;--bad:#f87171;--sh:0 8px 20px rgba(0,0,0,.3)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Nunito','Gaegu',sans-serif}
+body{background:var(--bg);color:var(--ink);padding:20px;max-width:900px;margin:0 auto;line-height:1.55}
+header{text-align:center;margin-bottom:22px}
+h1{font-family:'Gaegu',cursive;font-size:2.2rem;color:var(--pri);margin-bottom:6px}
+.title-mark{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-right:8px;vertical-align:middle;border-radius:10px;background:var(--warn-mk);border:3px solid var(--warn-bd);color:var(--warn);font-size:1.6rem;font-weight:800;font-family:'Gaegu',cursive}
+.sub{font-size:1.1rem;color:var(--sub)}
+.card{background:var(--card);border:3px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--pri-bg);border:2px solid var(--pri-bd);color:var(--pri);font-weight:800;font-size:.85rem}
+.badge.ok{background:var(--ok-bg);border-color:var(--in-bd);color:var(--ok-ink)}
+h2{font-size:1.15rem;font-weight:800;margin-bottom:8px;color:var(--pri)}
+textarea,input[type=text],select{width:100%;padding:12px;border:2px solid var(--in-bd);border-radius:10px;background:var(--in-bg);color:var(--ink);font-size:1rem;outline:none}
+textarea{min-height:84px;resize:vertical}
+select{width:auto;padding:8px}
+textarea:focus,input[type=text]:focus{border-color:var(--ok)}
+button{padding:10px 18px;border:2px solid var(--pri);border-radius:12px;background:var(--pri);color:var(--on-pri);font-weight:800;font-size:1rem;cursor:pointer}
+button.alt{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+button.on{background:var(--ok-d);border-color:var(--ok-d);color:#fff}
+button.off{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-bd)}
+button.bad{background:transparent;color:var(--bad);border-color:var(--bad);padding:4px 10px}
+button.link{background:none;border:0;color:var(--sub);font-weight:400;font-size:.85rem;text-decoration:underline;padding:4px}
+button:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.steps span{padding:4px 12px;border-radius:99px;border:2px solid var(--line);background:var(--card);font-size:.82rem;font-weight:800;color:var(--sub)}
+.steps span.cur{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.steps span.done{background:var(--ok-bg);border-color:var(--in-bd);color:var(--ok-ink)}
+.guess{border:2px solid var(--blue-bd);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:var(--blue-bg);color:var(--blue-ink);font-weight:700}
+.guess.sel{border-color:var(--in-bd);background:var(--ok-bg);color:var(--ok-ink)}
+.guess label,.guess small{display:block;font-weight:800;margin-bottom:4px;color:var(--sub);font-size:.9rem}
+.guess input,.guess textarea{color:var(--ink);font-weight:400}
+.line{padding:8px 12px;margin-bottom:8px;border-left:5px solid var(--pri);border-radius:8px;background:var(--pri-bg);font-weight:700}
+.line b{color:var(--pri)}
+.line.fix{border-left-color:var(--warn-bd);background:var(--warn-bg);color:var(--warn)}
+.line.fix b{color:var(--warn)}
+.turn{background:var(--warn-bg);color:var(--warn);border:3px dashed var(--warn-bd);border-radius:14px;padding:10px;font-weight:800;text-align:center;margin:10px 0}
+.turn.me{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok)}
+.note{background:var(--warn-bg);color:var(--warn);border:3px dashed var(--warn-bd);border-radius:14px;padding:10px 14px;font-weight:800;font-size:.95rem;margin-bottom:14px}
+.muted{color:var(--sub);font-size:.9rem;font-weight:400}
+.chg{margin:6px 0;padding:8px 10px;border-radius:10px;background:var(--ok-bg);border-left:5px solid var(--ok);color:var(--ok-ink);font-size:.92rem}
+.chg .t{display:inline-block;padding:1px 8px;margin-right:4px;border-radius:99px;background:var(--ok-d);color:var(--card);font-weight:800;font-size:.8rem}
+.chg .muted{margin-top:2px}
+s{color:var(--bad)}ins{color:var(--ok-ink);text-decoration:none;font-weight:800;background:var(--ok-bg);padding:0 3px;border-radius:4px}
+.who,.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.who span,.chips span{padding:3px 10px;border-radius:99px;background:var(--blue-bg);border:2px solid var(--blue-bd);color:var(--blue-ink);font-weight:700;font-size:.85rem}
+.who span.me{background:var(--ok-d);border-color:var(--ok-d);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.pl{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.pl span{flex:1}
+pre{white-space:pre-wrap;font-size:.95rem;background:var(--in-bg);border:2px solid var(--in-bd);border-radius:10px;padding:12px;margin-top:8px}
+.sm{padding:2px 10px;font-size:.8rem;margin-left:6px;border-radius:99px}
+.help{margin-top:12px;padding:10px 12px;border:3px dashed var(--warn-bd);border-radius:14px;background:var(--warn-bg)}
+.help h2{color:var(--warn);font-size:1rem}
+.chipRow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.chipRow>span{min-width:62px;font-weight:800}
+.chip{padding:3px 12px;border-radius:99px;background:var(--card);color:var(--warn);border:2px solid var(--warn-bd);font-size:.95rem}
+.chip small{display:block;font-size:.7rem;font-weight:600;color:var(--sub);line-height:1.1}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:700;display:none;z-index:9;max-width:90%}
+</style>
+</head>
+<body>
+<header><h1><span class="title-mark">✎</span>Enemy Pie · Relay Writing</h1><p class="sub">우리 조의 이야기를 함께 만들고, AI와 함께 다듬어 보아요</p></header>
+<div id="app"><div class="card">연결하는 중…</div></div>
+<div id="toast"></div>
+<script>
+const OPEN=['And all the while, I listened to the sounds of my dad chopping and stirring and blending the ingredients of Enemy Pie.','This could be a great summer after all.'];
+const END=['Enemy Pie was delicious!','After dessert, Jeremy rode his bike home but not before inviting me over to play on his trampoline in the morning.','As for Enemy Pie, I still don’t know how to make it.','I still wonder if enemies really do hate it or if their hair falls out or their breath turns bad.','But I don’t know if I’ll ever get an answer, because I just lost my best enemy.'];
+const full=a=>[...OPEN,...a,...END].join(' ');
+const fix=a=>a.map(t=>'<div class="line fix"><b>🔒</b> '+esc(t)+'</div>').join('');
+const WORDS=[['순서',[['First','먼저'],['Then','그러고 나서'],['Next','다음에'],['After that','그 후에'],['Finally','마침내']]],
+['이어 주는 말',[['Suddenly','갑자기'],['But','하지만'],['So','그래서'],['Because','왜냐하면']]]];
+const NOCOMMA=['But','So','Because'];
+function ins(w){
+  const el=document.getElementById(S.editing!=null?'ed':'dr');
+  if(!el){toast('내 차례가 되면 쓸 수 있어요.');return}
+  const add=w+(NOCOMMA.includes(w)?' ':', '),v=el.value,p=el.selectionStart==null?v.length:el.selectionStart;
+  el.value=v.slice(0,p)+add+v.slice(p);
+  if(S.editing!=null)S.ed=el.value;else S.draft=el.value;
+  el.focus();el.setSelectionRange(p+add.length,p+add.length);
+}
+const help=()=>'<div class="help"><h2>💡 쓰기 도우미: 이어 주는 말</h2><p class="muted">누르면 글을 쓰고 있는 칸에 들어가요. 문장 앞에 넣고, 뒤따르는 첫 글자는 소문자로 바꿔 보세요.</p>'+WORDS.map(g=>'<div class="chipRow"><span class="muted">'+g[0]+'</span>'+g[1].map(w=>'<button class="chip" onmousedown="event.preventDefault()" onclick="ins(\''+w[0]+'\')">'+w[0]+'<small>'+w[1]+'</small></button>').join('')+'</div>').join('')+'</div>';
+/* ★ Apps Script 배포 후 나온 웹 앱 주소(…/exec)를 붙여넣으세요 */
+const API=window.SERVER_URL||'',POLL=4000;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STEPS=['① 추측 나누기','② 이야기 선정','③ 한 줄씩 쓰기','④ AI에게 다듬기 부탁','⑤ 수정안 검수','⑥ 최종본 제출'];
+let D={v:-1,step:0,size:4,players:{},assign:{},groups:{}},isT=false,ready=false;
+const S={editing:null,ed:'',draft:'',g1:null,plan:null,paste:'',manual:false,mv:[],busy:false,pa:{}};
+let me=localStorage.getItem('rid');
+if(!me){me='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);localStorage.setItem('rid',me)}
+let PW=sessionStorage.getItem('pw')||'';
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',3200)}
+
+/* ---------- 서버 통신 ---------- */
+async function send(d){
+  try{
+    const r=await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({id:me,pw:PW},d))}),j=await r.json();
+    if(j.err){toast(j.err);return j}
+    if(j.s){D=j.s;render()}
+    return j;
+  }catch(e){toast('연결이 불안정해요. 다시 눌러 주세요.')}
+}
+async function poll(){
+  if(document.hidden)return;
+  try{const r=await fetch(API+'?since='+D.v,{cache:'no-store'}),j=await r.json();if(!j.same)D=j;if(!j.same||!ready){ready=true;render()}}catch(e){}
+}
+async function tlogin(silent){
+  const p=silent?PW:prompt('교사용 비밀번호');if(!p)return;PW=p;
+  const j=await send({a:'auth'});
+  if(j&&j.ok){isT=true;sessionStorage.setItem('pw',p);render()}else{PW='';sessionStorage.removeItem('pw')}
+}
+if(API.indexOf('http')!==0)$('#app').innerHTML='<div class="card">config.js 파일에 Apps Script 웹 앱 주소를 넣어 주세요.</div>';
+else{poll();setInterval(poll,POLL);if(PW)tlogin(true)}
+
+/* ---------- 도우미 ---------- */
+const P=()=>D.players||{},A=u=>(D.assign||{})[u];
+const gd=g=>Object.assign({chosen:null,plan:'',lines:[],ai:null,acc:{},done:false},(D.groups||{})[g]);
+const members=g=>Object.entries(D.assign||{}).filter(([u,a])=>a.g===g).sort((a,b)=>a[1].s-b[1].s).map(([u,a])=>({u,s:a.s,name:(P()[u]||{}).name||'?',guess:(P()[u]||{}).guess||''}));
+const groupIds=()=>[...new Set(Object.values(D.assign||{}).map(a=>a.g))].sort((a,b)=>a-b);
+const nm=(g,s)=>{const m=members(g).find(x=>x.s===s);return m?m.name:'Player '+s};
+const para=a=>a.join(' ');
+const finals=g=>{const G=gd(g);return G.lines.map((l,i)=>{const a=G.ai&&G.ai.lines[i];return a&&(!a.changes.length||G.acc[i])?a.revised:l.t})};
+const decided=g=>{const G=gd(g);return G.ai&&G.ai.lines.every((l,i)=>!l.changes.length||G.acc[i]!=null)};
+const steps=()=>'<div class="steps">'+STEPS.map((t,i)=>'<span class="'+(i===D.step?'cur':i<D.step?'done':'')+'">'+t+'</span>').join('')+'</div>';
+const lineList=(g,ed)=>gd(g).lines.map((l,i)=>{
+  const h='<b>'+(i+1)+'. '+esc(nm(g,l.s))+'</b>';
+  if(ed&&S.editing===i)return '<div class="line">'+h+'<textarea id="ed" style="margin-top:6px" oninput="S.ed=this.value">'+esc(S.ed)+'</textarea><div class="row"><button onclick="saveEdit()">저장</button><button class="alt" onclick="cancelEdit()">취소</button></div></div>';
+  return '<div class="line">'+h+' '+esc(l.t)+(ed?' <button class="alt sm" onclick="editLine('+i+')">✏️ 수정하기</button>':'')+'</div>';
+}).join('');
+function report(g){
+  const G=gd(g),k=Object.values(G.acc).filter(Boolean).length,n=G.ai?G.ai.lines.filter(l=>l.changes.length).length:0,ch=members(g).find(m=>m.u===G.chosen);
+  return 'Enemy Pie · Relay Writing\nGroup: '+g+'\nMembers: '+members(g).map(m=>m.name).join(', ')+'\n\n[Our idea (My Guess)]\n'+(ch?ch.guess:'-')+'\n\n[Before AI]\n'+para(G.lines.map(l=>l.t))+'\n\n[After AI + our review (Final)]\n'+para(finals(g))+'\n\nAI suggestions accepted: '+k+' / '+n+' sentences';
+}
+
+/* ---------- 학생 동작 ---------- */
+const join=()=>{const n=($('#nm').value||'').trim();if(!n){toast('이름을 써 주세요.');return}send({a:'join',name:n})};
+const saveGuess=async()=>{const t=S.g1==null?(P()[me]||{}).guess||'':S.g1,j=await send({a:'guess',text:t});if(j&&j.ok){S.g1=null;toast('저장했어요 ✅')}};
+const choose=u=>send({a:'choose',u});
+const savePlan=async()=>{const j=await send({a:'plan',text:S.plan==null?gd(A(me).g).plan:S.plan});if(j&&j.ok){S.plan=null;toast('줄거리를 저장했어요 ✅')}};
+async function addLine(){
+  const t=(S.draft||'').trim();
+  if(!t){toast('한 문장을 써 주세요.');return}
+  if(/[가-힣]/.test(t)){toast('영어로 써 주세요! ✏️');return}
+  const j=await send({a:'line',text:t});if(j&&j.ok)S.draft='';
+}
+const editLine=i=>{S.editing=i;S.ed=gd(A(me).g).lines[i].t;render()};
+const cancelEdit=()=>{S.editing=null;render()};
+async function saveEdit(){
+  const t=(S.ed||'').trim();
+  if(!t){toast('한 문장을 써 주세요.');return}
+  if(/[가-힣]/.test(t)){toast('영어로 써 주세요! ✏️');return}
+  const j=await send({a:'edit',i:S.editing,text:t});if(j&&j.ok){S.editing=null;render();toast('문장을 고쳤어요 ✅')}
+}
+/* AI(ChatGPT) 단계: 프롬프트 복사 → 결과 붙여넣기 */
+function aiPrompt(g){
+  const list=gd(g).lines.map((l,i)=>i+': '+l.t).join('\n');
+  return 'You are an English writing tutor for Korean first-year middle school students (about CEFR A1-A2). Four students wrote the 4 middle sentences of a story paragraph, one sentence each. The opening and ending sentences are FIXED (from the picture book Enemy Pie) and are given only as context.\n'
+  +'Your role is only a LEARNING ASSISTANT. Never change the fixed sentences. Do NOT invent or add any new events, characters, ideas or details, and do NOT remove any idea. Keep exactly 4 sentences and keep the meaning of each.\n'
+  +'You may only: (1) fix grammar, spelling and punctuation, (2) replace a word with a more natural simple word, (3) add or adjust connecting words so the whole paragraph flows from the opening into the ending (for example First, Then, So, But, After that, Finally). Keep the English simple for beginners.\n'
+  +'Return ONLY one JSON code block, nothing else: {"lines":[{"revised":"...","changes":[{"type":"문법 or 연결어 or 표현 or 철자","from":"words before","to":"words after","why":"쉬운 한국어로 이유 한 문장"}]}],"tip":"한국어로 이 글에 대한 짧은 학습 조언 한 문장"}\n'
+  +'"lines" must have exactly 4 items in the same order as the student sentences. If a sentence needs no change, "revised" equals the original and "changes" is [].\n\nOpening (fixed):\n'+OPEN.join(' ')+'\n\nStudent sentences:\n'+list+'\n\nEnding (fixed):\n'+END.join(' ');
+}
+async function clip(t,m,id){try{await navigator.clipboard.writeText(t);toast(m)}catch(e){const p=document.getElementById(id||'pp');if(p){const r=document.createRange();r.selectNodeContents(p);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast('글을 길게 눌러 복사해 주세요.')}}
+const copyPrompt=g=>clip(aiPrompt(g),'프롬프트를 복사했어요 ✅','pp'+g);
+const openClaude=g=>window.open('https://claude.ai/new?q='+encodeURIComponent(aiPrompt(g)),'_blank','noopener');
+const copyReport=()=>clip(report(A(me).g),'복사했어요 ✅');
+function norm(g,rows){
+  const o=gd(g).lines;
+  return {tip:rows.tip||'',lines:rows.lines.map((x,i)=>{
+    const rv=String(x.revised||'').trim()||o[i].t;let ch=Array.isArray(x.changes)?x.changes:[];
+    if(rv!==o[i].t&&!ch.length)ch=[{type:'표현',from:'',to:'',why:'AI가 고친 문장이에요. 어디가 달라졌는지 찾아보세요.'}];
+    return {revised:rv,changes:ch}})};
+}
+const askAI=()=>send({a:'askai'});
+async function sendAI(g){
+  const t=S.pa[g]||'',a=t.indexOf('{'),b=t.lastIndexOf('}');
+  try{const r=JSON.parse(t.slice(a,b+1));if(!Array.isArray(r.lines)||r.lines.length!==4)throw 0;
+    const j=await send({a:'ai',g,ai:norm(g,r)});if(j&&j.ok){S.pa[g]='';toast(g+'조에 결과를 보냈어요 ✅')}}
+  catch(e){toast('형식이 맞지 않아요. Claude에게 "JSON 코드 상자만 다시 보내 줘"라고 요청해 보세요.')}
+}
+const acc=(i,v)=>send({a:'acc',i,v});
+const submit=()=>{if(confirm('최종본을 제출할까요?'))send({a:'submit'})};
+
+/* ---------- 선생님 동작 ---------- */
+const cfg=()=>send({a:'cfg',size:+$('#size').value});
+const split=()=>send({a:'split'});
+const setStep=n=>send({a:'step',step:n});
+const removeP=u=>{if(confirm('이 학생을 명단에서 뺄까요?'))send({a:'remove',u})};
+const moveP=(u,g)=>send({a:'move',u,g:+g});
+const resetAll=()=>{if(confirm('참가자와 모둠 기록을 모두 지울까요?'))send({a:'reset'})};
+
+/* ---------- 화면 ---------- */
+function render(){
+  if(API.indexOf('http')!==0)return;
+  const e=document.activeElement,id=e&&e.id,ss=e&&e.selectionStart,se=e&&e.selectionEnd;
+  $('#app').innerHTML=isT?tea():stu();
+  if(id){const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(ss,se)}catch(x){}}}
+}
+const idea=g=>{const G=gd(g),c=members(g).find(m=>m.u===G.chosen);return '<div class="card"><h2>⭐ 우리 조가 고른 이야기</h2>'+(c?'<div class="guess sel">'+esc(c.guess)+'</div>':'<p class="muted">아직 선정하지 않았어요.</p>')+(G.plan?'<div class="muted" style="white-space:pre-wrap">🧩 '+esc(G.plan)+'</div>':'')+'</div>'};
+
+function stu(){
+  const p=P()[me];
+  if(!p||!p.name)return '<div class="card"><h2>👋 이름을 써 주세요</h2><input type="text" id="nm" maxlength="12" placeholder="내 이름"><div class="row"><button onclick="join()">입장하기</button></div></div><div style="text-align:center"><button class="link" onclick="tlogin()">선생님이신가요?</button></div>';
+  const a=A(me);
+  let h='<div class="card bar"><b>'+esc(p.name)+'</b><span class="badge">'+(a?a.g+'조 · Player '+a.s:'조 편성 대기 중')+'</span></div>'+steps();
+  const gv=S.g1==null?p.guess||'':S.g1;
+  const guessBox='<div class="card"><h2>✏️ My Guess</h2><p class="muted">Scene 8에서 Jeremy와 친구가 될 수 있었던 이유는 무엇일까요? (영어 또는 한국어)</p><textarea id="g1" oninput="S.g1=this.value" placeholder="I think ...">'+esc(gv)+'</textarea><div class="row"><button onclick="saveGuess()">저장하기</button></div></div>';
+  if(!a)return h+guessBox+'<div class="card">🕐 선생님이 조를 편성하면 자동으로 화면이 바뀌어요. 그동안 내 추측을 먼저 써 두세요!</div>';
+  const g=a.g,G=gd(g),ms=members(g);
+  if(D.step===0){
+    h+=guessBox+'<div class="card"><h2>💬 모둠원의 추측 읽고 이야기 나누기</h2>';
+    ms.filter(m=>m.u!==me).forEach(m=>h+='<div class="guess"><label>'+esc(m.name)+'</label>'+(esc(m.guess)||'<span class="muted">아직 쓰지 않았어요</span>')+'</div>');
+    return h+'</div>';
+  }
+  if(D.step===1){
+    h+='<div class="card"><h2>⭐ 우리 모둠 이야기 선정하기</h2><p class="muted">가장 재밌거나 그럴듯한 이야기를 함께 골라요.</p></div>';
+    ms.forEach(m=>h+='<div class="guess '+(m.u===G.chosen?'sel':'')+'"><label>'+esc(m.name)+'</label>'+(esc(m.guess)||'<span class="muted">아직 쓰지 않았어요</span>')+'<div class="row"><button class="'+(m.u===G.chosen?'on':'alt')+'" onclick="choose(\''+m.u+'\')">'+(m.u===G.chosen?'⭐ 선정됨':'이 이야기로 선정')+'</button></div></div>');
+    return h+'<div class="card"><h2>🧩 이야기 함께 구상하기</h2><p class="muted">누가? 무슨 일이? 어떻게 친구가 되었나? (한국어 OK)</p><textarea id="plan" oninput="S.plan=this.value" placeholder="시작 → 가운데 → 끝">'+esc(S.plan==null?G.plan:S.plan)+'</textarea><div class="row"><button onclick="savePlan()">줄거리 저장</button></div></div>';
+  }
+  if(D.step===2){
+    const n=G.lines.length,done=n>=4,t=n%ms.length+1;
+    h+=idea(g)+'<div class="card"><h2>3. 한 줄씩 이어 써서 이야기 한 단락 만들기</h2><p class="muted" style="margin-bottom:8px">🔒 표시된 문장은 고정이에요. 그 사이에 들어갈 문장 4개를 한 줄씩 영어로 써요.</p><div class="who">'+ms.map(m=>'<span class="'+(!done&&m.s===t?'me':'')+'">'+esc(m.name)+'</span>').join('')+'</div>'+((!done||S.editing!=null)?help():'')+fix(OPEN)+lineList(g,true)
+    +(done?'<div class="turn">🎉 이야기 한 단락 완성! 선생님이 다음 단계를 열 때까지 기다려요.</div>':t===a.s?'<div class="turn me">✍️ 내 차례예요! 영어로 한 문장!</div><textarea id="dr" placeholder="Write one sentence in English." oninput="S.draft=this.value">'+esc(S.draft)+'</textarea><div class="row"><button onclick="addLine()">보내기</button></div>':'<div class="turn">⏳ '+esc(nm(g,t))+'의 차례예요. 다음 문장을 미리 생각해 두세요.</div>')+fix(END)+'</div>';
+    return h;
+  }
+  if(D.step===3){
+    h+='<div class="card"><h2>📖 우리가 쓴 글</h2>'+fix(OPEN)+lineList(g)+fix(END)+'</div><div class="card"><h2>4. AI에게 다듬기 부탁하기</h2><p class="muted">AI는 이야기를 새로 만들지 않아요. <b>문법</b>, <b>연결어</b>, 자연스러운 <b>표현</b>만 도와주는 학습 도우미예요. 버튼을 누르면 선생님께 요청이 전달돼요.</p>';
+    if(G.ai)return h+'<div class="turn me">✅ AI 결과가 도착했어요! 선생님이 다음 단계를 열 때까지 기다려요.</div></div>';
+    if(G.req)return h+'<div class="turn">⏳ 선생님께 요청을 보냈어요. AI가 다듬는 동안 기다려요.</div></div>';
+    return h+(G.lines.length>=4?'<div class="row"><button onclick="askAI()">🤖 AI에게 다듬기 부탁하기</button></div>':'<p class="muted">문장 4개를 모두 써야 해요.</p>')+'</div>';
+  }
+  if(!G.ai)return h+'<div class="card">AI 결과가 아직 없어요. 3·4단계를 먼저 끝내야 해요.</div>';
+  if(D.step===4){
+    h+='<div class="card"><h2>5. AI의 수정안 검수하기</h2><p class="muted">고친 부분과 이유를 읽고, <b>받아들일지 내 문장을 유지할지</b> 모둠이 함께 정해요.</p>'+(G.ai.tip?'<div class="chg">💬 '+esc(G.ai.tip)+'</div>':'')+'</div>';
+    G.lines.forEach((l,i)=>{
+      const x=G.ai.lines[i];
+      h+='<div class="card"><div class="muted">'+(i+1)+'. '+esc(nm(g,l.s))+' 의 문장</div><div style="margin:4px 0"><s>'+esc(l.t)+'</s></div>';
+      if(!x.changes.length)h+='<div class="chg">✅ 고칠 부분이 없어요!</div>';
+      else h+='<div><ins>'+esc(x.revised)+'</ins></div>'+x.changes.map(c=>'<div class="chg"><span class="t">'+esc(c.type||'표현')+'</span>'+(c.from||c.to?esc(c.from)+' → <b>'+esc(c.to)+'</b>':'')+'<div class="muted">'+esc(c.why)+'</div></div>').join('')+'<div class="row"><button class="'+(G.acc[i]===true?'on':'alt')+'" onclick="acc('+i+',true)">AI 수정 받아들이기</button><button class="'+(G.acc[i]===false?'off':'alt')+'" onclick="acc('+i+',false)">내 문장 유지</button></div>';
+      h+='</div>';
+    });
+    return h+(decided(g)?'<div class="turn me">✅ 검수를 마쳤어요! 선생님이 다음 단계를 열 때까지 기다려요.</div>':'<p class="muted">모든 수정안에 대해 선택해 주세요.</p>');
+  }
+  const n=G.ai.lines.filter(l=>l.changes.length).length,k=Object.values(G.acc).filter(Boolean).length;
+  return h+'<div class="card"><h2>6. 최종본 제출하기</h2><p class="muted">AI 수정 전과 후를 모두 제출해요. (AI 수정을 받아들인 문장 '+k+' / '+n+')</p><div class="guess"><label>수정 전 (우리가 쓴 글)</label>'+esc(para(G.lines.map(l=>l.t)))+'</div><div class="guess sel"><label>수정 후 (검수를 마친 최종본)</label>'+esc(para(finals(g)))+'</div><div class="row">'+(G.done?'<span class="badge ok">✅ 제출 완료</span>':'<button onclick="submit()" '+(decided(g)?'':'disabled')+'>📤 제출하기</button>')+'<button class="alt" onclick="copyReport()">📋 복사하기</button></div></div>';
+}
+
+function tea(){
+  const ids=Object.keys(P()),un=ids.filter(u=>!A(u)),gs=groupIds();
+  const opt=(arr,v)=>arr.map(n=>'<option '+(n==v?'selected':'')+'>'+n+'</option>').join('');
+  let h='<div class="card"><h2>👩‍🏫 선생님 화면</h2>'+steps()+'<div class="chips"><b>입장 '+ids.length+'명</b></div>';
+  h+='<div class="row"><label>모둠 인원 <select id="size" onchange="cfg()">'+opt([3,4,5],D.size)+'</select></label><button onclick="split()">🔀 무작위 조 편성</button></div>';
+  if(ids.length){const n=Math.ceil(ids.length/D.size);h+='<p class="muted" style="margin-top:6px">지금 '+ids.length+'명 → 약 '+n+'개 조(조당 '+Math.floor(ids.length/n)+'~'+Math.ceil(ids.length/n)+'명)로 나뉘어요.</p>'}
+  if(gs.length&&un.length)h+='<p class="muted">⚠️ 조가 없는 학생 '+un.length+'명이 있어요. 아래에서 조를 정해 주거나 다시 편성하세요.</p>';
+  h+='<p class="muted" style="margin-top:8px">학생 화면은 아래 단계를 따라가요.</p><div class="row">'+STEPS.map((t,i)=>'<button class="'+(i===D.step?'on':'alt')+'" onclick="setStep('+i+')">'+t+'</button>').join('')+'</div></div>';
+  const q=gs.filter(g=>{const G=gd(g);return G.req&&!G.ai}).sort((x,y)=>gd(x).req-gd(y).req);
+  h+='<div class="card"><h2>🤖 AI 다듬기 요청 ('+q.length+')</h2>'+(q.length?'<p class="muted">요청 순서대로 보여요. 프롬프트를 Claude에 넣고, 나온 JSON 코드 상자를 복사해 붙여넣으세요.</p>':'<p class="muted">학생들이 4단계에서 요청하면 여기에 나타나요.</p>');
+  q.forEach(g=>{const G=gd(g),tm=new Date(G.req).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    h+='<div class="guess"><label>'+g+'조 · '+tm+' 요청</label>'+esc(para(G.lines.map(l=>l.t)))+'<div class="row"><button class="alt" onclick="copyPrompt('+g+')">📋 프롬프트 복사</button><button onclick="openClaude('+g+')">🤖 Claude 열기</button></div><pre id="pp'+g+'" style="max-height:70px;overflow:auto;font-size:.75rem">'+esc(aiPrompt(g))+'</pre><textarea id="pa'+g+'" placeholder="Claude의 답(코드 상자)을 붙여넣기" oninput="S.pa['+g+']=this.value" style="min-height:60px">'+esc(S.pa[g]||'')+'</textarea><div class="row"><button class="on" onclick="sendAI('+g+')">✅ '+g+'조에 결과 보내기</button></div></div>'});
+  h+='</div>';
+  h+='<div class="card"><h2>👥 학생 명단 (결석·지각 조정)</h2>';
+  ids.forEach(u=>{const a=A(u),opts=[...gs,gs.length+1].map(g=>'<option value="'+g+'" '+(a&&a.g===g?'selected':'')+'>'+g+'조'+(g>gs.length?' (새 조)':'')+'</option>').join('');
+    h+='<div class="pl"><span>'+esc(P()[u].name)+(a?'':' <small class="muted">(미배정)</small>')+'</span><select onchange="moveP(\''+u+'\',this.value)">'+(a?'':'<option value="" selected>조 선택</option>')+opts+'</select><button class="bad" onclick="removeP(\''+u+'\')">✕</button></div>'});
+  h+='<div class="row"><button class="bad" onclick="resetAll()">전체 초기화</button></div></div><div class="grid">';
+  gs.forEach(g=>{
+    const G=gd(g),ms=members(g),c=ms.find(m=>m.u===G.chosen),k=Object.values(G.acc).filter(Boolean).length,n=G.ai?G.ai.lines.filter(l=>l.changes.length).length:0;
+    h+='<div class="card"><div class="bar"><h2>'+g+'조</h2><span class="badge '+(G.done?'ok':'')+'">'+(G.done?'제출 완료':'문장 '+G.lines.length+'/4'+(G.ai?' · AI '+(decided(g)?'검수완료':'검수 '+Object.keys(G.acc).length+'/'+n):G.req?' · 🤖 요청':''))+'</span></div>';
+    h+='<div class="chips">'+ms.map(m=>'<span>P'+m.s+' '+esc(m.name)+'</span>').join('')+'</div><p class="muted" style="margin:6px 0">⭐ '+(c?esc(c.guess):'선정 전')+'</p>'+lineList(g);
+    if(G.ai)h+='<div class="guess sel" style="margin-top:6px"><label>최종본 (AI 수락 '+k+'/'+n+')</label>'+esc(para(finals(g)))+'</div>';
+    h+='</div>';
+  });
+  return h+'</div>';
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <script src="config.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Enemy Pie - 교사용 보드</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', 'Gaegu', sans-serif; }
+        body { background: #fdfbf7; color: #4a4a4a; padding: 20px; }
+        h1 { font-family: 'Gaegu', cursive; font-size: 2rem; color: #d86278; text-align: center; margin-bottom: 4px; }
+        .sub { text-align: center; color: #7a7a7a; margin-bottom: 16px; }
+        .wrap { max-width: 1100px; margin: 0 auto; }
+
+        .gate { max-width: 380px; margin: 40px auto; background: #fff; border: 3px solid #f0e6df; border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,.05); }
+        .gate input { width: 100%; padding: 10px; margin: 12px 0; border: 2px solid #a7f3d0; border-radius: 10px; background: #f0fdf4; color: #000; font-size: 1rem; }
+        .gate .msg { min-height: 1.3em; color: #b91c1c; font-weight: 700; margin-bottom: 8px; }
+        button { font-weight: 800; cursor: pointer; }
+        .btn { padding: 10px 22px; border: none; border-radius: 22px; background: #10b981; color: #fff; font-size: 1rem; }
+
+        .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .tabs { display: flex; gap: 8px; }
+        .tab { padding: 10px 18px; border-radius: 22px; border: 2px solid #d1d5db; background: #fff; color: #6b7280; font-size: 1rem; }
+        .tab.on { background: #ffe3e0; border-color: #ff8b94; color: #b4455a; }
+        .conn { font-size: .9rem; font-weight: 700; color: #6b7280; }
+        .conn.ok::before { content: '● '; color: #22c55e; }
+        .conn.bad::before { content: '● '; color: #ef4444; }
+
+        .tools { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 12px; font-weight: 700; color: #4b5563; }
+        .tools button { padding: 6px 14px; border-radius: 16px; border: 2px solid #93c5fd; background: #f0f7ff; color: #1e3a8a; }
+        .tools button.on { background: #bae6fd; }
+        .tools label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+
+        .card { background: #fff; border: 3px solid #f0e6df; border-radius: 16px; padding: 14px 16px; box-shadow: 0 6px 16px rgba(0,0,0,.04); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 8px 10px; color: #047857; border-bottom: 2px solid #a7f3d0; font-size: .95rem; }
+        td { padding: 10px; border-bottom: 1px solid #f0e6df; vertical-align: top; color: #111; }
+        td.seat { font-weight: 800; color: #d86278; white-space: nowrap; }
+        td.num { text-align: center; white-space: nowrap; }
+        td.time { color: #9ca3af; white-space: nowrap; font-size: .85rem; }
+        td.guess { font-size: 1.05rem; line-height: 1.5; word-break: break-word; }
+        tr.fresh td { animation: flash 2.4s ease-out; }
+        @keyframes flash { from { background: #fef3c7; } to { background: transparent; } }
+        .empty { text-align: center; color: #9ca3af; padding: 30px 0; }
+        .big td.guess { font-size: 1.7rem; line-height: 1.6; }
+        .big td.seat { font-size: 1.5rem; }
+        .hideseat .seatcol { display: none; }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+        .chip { padding: 4px 12px; border-radius: 14px; background: #ede9fe; color: #5b21b6; font-weight: 800; font-size: .9rem; }
+        .chip.warn { background: #fef3c7; color: #92400e; }
+        .chip.good { background: #dcfce7; color: #166534; }
+        .groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+        .gtitle { font-size: 1.15rem; font-weight: 800; color: #d86278; }
+        .members { color: #6b7280; font-size: .9rem; margin-bottom: 8px; }
+        .sec { margin-top: 10px; }
+        .sec h4 { font-size: .85rem; color: #047857; margin-bottom: 4px; }
+        .box { background: #f9fafb; border-radius: 10px; padding: 8px 10px; color: #111; line-height: 1.5; word-break: break-word; }
+        .line { padding: 6px 0; border-bottom: 1px dashed #e5e7eb; }
+        .line:last-child { border-bottom: none; }
+        .who { display: inline-block; min-width: 54px; margin-right: 6px; font-size: .8rem; font-weight: 800; color: #1d4ed8; }
+        .rev { color: #065f46; }
+        .chg { font-size: .82rem; color: #6b7280; margin: 2px 0 0 60px; }
+        .tag { display: inline-block; font-size: .72rem; font-weight: 800; padding: 1px 8px; border-radius: 10px; margin-left: 6px; }
+        .tag.yes { background: #dcfce7; color: #166534; }
+        .tag.no { background: #fee2e2; color: #991b1b; }
+        .none { color: #9ca3af; font-style: italic; }
+        .note { margin-top: 12px; color: #6b7280; font-size: .9rem; }
+        .hide { display: none; }
+        @media (max-width: 600px) { body { padding: 12px; } .groups { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>🧑‍🏫 Enemy Pie 교사용 보드</h1>
+    <p class="sub">학생들이 제출한 내용이 몇 초마다 자동으로 새로 고쳐져요.</p>
+
+    <div class="gate" id="gate">
+        <div style="font-weight:800;color:#d86278;font-size:1.1rem">선생님 비밀번호</div>
+        <input type="password" id="pw" placeholder="비밀번호" autocomplete="off">
+        <div class="msg" id="gmsg"></div>
+        <button class="btn" id="goBtn">들어가기</button>
+    </div>
+
+    <div id="board" class="hide">
+        <div class="bar">
+            <div class="tabs">
+                <button class="tab on" id="tabPie">말풍선 활동 제출</button>
+                <button class="tab" id="tabRelay">Relay Writing</button>
+            </div>
+            <div class="conn" id="conn">연결 중…</div>
+        </div>
+
+        <!-- 말풍선 활동 -->
+        <div id="pie">
+            <div class="tools">
+                <span id="pieCount">제출 0명</span>
+                <span>정렬:
+                    <button id="sortSeat" class="on">번호순</button>
+                    <button id="sortNew">최근 제출순</button>
+                </span>
+                <label><input type="checkbox" id="bigChk"> 큰 글씨</label>
+                <label><input type="checkbox" id="hideChk"> 번호 숨기기(화면 공유용)</label>
+            </div>
+            <div class="card">
+                <table id="pieTable">
+                    <thead><tr><th class="seatcol">번호</th><th>My Guess</th><th>맞힌 컷</th><th>틀린 횟수</th><th>제출 시각</th></tr></thead>
+                    <tbody id="pieBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Relay Writing -->
+        <div id="relay" class="hide">
+            <div class="chips" id="relayChips"></div>
+            <div class="groups" id="groups"></div>
+            <div class="note" id="relayNote"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ===== 설정 ===== */
+    const SERVER = window.SERVER_URL || 'PASTE_YOUR_WEB_APP_URL_HERE'; // 주소는 config.js 파일에 넣어요
+    const POLL_MS = 4000;
+    const STEPS = ['① 추측 나누기', '② 이야기 선정', '③ 한 줄씩 쓰기', '④ AI에게 다듬기 부탁', '⑤ 수정안 검수', '⑥ 최종본 제출'];
+
+    /* ===== 상태 ===== */
+    let pw = '';
+    let pieRows = [], pieSeen = null, sortMode = 'seat';
+    let relayV = null, relayState = null;
+    let timer = null;
+
+    const $ = id => document.getElementById(id);
+    function el(tag, cls, text) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text;
+        return e;
+    }
+    function hhmmss(ms) {
+        if (!ms) return '';
+        return new Date(ms).toLocaleTimeString('ko-KR', { hour12: false });
+    }
+    async function getJSON(url) {
+        const res = await fetch(url);
+        return await res.json();
+    }
+    function setConn(ok, msg) {
+        const c = $('conn');
+        c.textContent = msg;
+        c.className = 'conn ' + (ok ? 'ok' : 'bad');
+    }
+
+    /* ===== 로그인 ===== */
+    async function login() {
+        const msg = $('gmsg');
+        msg.textContent = '';
+        pw = $('pw').value;
+        if (!pw) { msg.textContent = '비밀번호를 입력해 주세요.'; return; }
+        if (SERVER.indexOf('PASTE_') === 0) { msg.textContent = '서버 주소가 아직 설정되지 않았어요. config.js 파일에 주소를 넣어 주세요.'; return; }
+        $('goBtn').disabled = true;
+        try {
+            const data = await getJSON(SERVER + '?view=pie&pw=' + encodeURIComponent(pw));
+            if (!data.ok) { msg.textContent = data.err || '들어갈 수 없어요.'; $('goBtn').disabled = false; return; }
+            $('gate').classList.add('hide');
+            $('board').classList.remove('hide');
+            applyPie(data.rows);
+            pollRelay();
+            timer = setInterval(poll, POLL_MS);
+            setConn(true, '연결됨 · ' + hhmmss(Date.now()));
+        } catch (e) {
+            msg.textContent = '서버에 연결하지 못했어요. 주소와 배포 설정을 확인해 주세요.';
+            $('goBtn').disabled = false;
+        }
+    }
+
+    /* ===== 주기적으로 가져오기 ===== */
+    async function poll() {
+        if (document.hidden) return;
+        try {
+            await Promise.all([pollPie(), pollRelay()]);
+            setConn(true, '연결됨 · ' + hhmmss(Date.now()));
+        } catch (e) {
+            setConn(false, '연결이 끊겼어요. 다시 시도하는 중…');
+        }
+    }
+    async function pollPie() {
+        const data = await getJSON(SERVER + '?view=pie&pw=' + encodeURIComponent(pw));
+        if (data.ok) applyPie(data.rows);
+    }
+    async function pollRelay() {
+        const url = SERVER + (relayV === null ? '' : '?since=' + relayV);
+        const data = await getJSON(url);
+        if (data.same) return;
+        relayState = data;
+        relayV = data.v;
+        renderRelay();
+    }
+
+    /* ===== 말풍선 활동 ===== */
+    function applyPie(rows) {
+        const prev = pieSeen;
+        const now = {};
+        rows.forEach(r => { now[r.seat] = r.t; r.fresh = !!prev && (prev[r.seat] === undefined || prev[r.seat] !== r.t); });
+        pieSeen = now;
+        pieRows = rows;
+        renderPie();
+    }
+    function renderPie() {
+        const rows = pieRows.slice();
+        rows.sort(sortMode === 'seat' ? (a, b) => a.seat - b.seat : (a, b) => b.t - a.t);
+        $('pieCount').textContent = '제출 ' + rows.length + '명';
+        const body = $('pieBody');
+        body.textContent = '';
+        if (!rows.length) {
+            const tr = el('tr'), td = el('td', 'empty', '아직 제출한 학생이 없어요.');
+            td.colSpan = 5; tr.appendChild(td); body.appendChild(tr);
+            return;
+        }
+        rows.forEach(r => {
+            const tr = el('tr', r.fresh ? 'fresh' : '');
+            tr.appendChild(el('td', 'seat seatcol', r.seat + '번'));
+            tr.appendChild(el('td', 'guess', r.guess));
+            tr.appendChild(el('td', 'num', r.correct + ' / 8'));
+            tr.appendChild(el('td', 'num', String(r.wrong)));
+            tr.appendChild(el('td', 'time', hhmmss(r.t)));
+            body.appendChild(tr);
+        });
+    }
+
+    /* ===== Relay Writing ===== */
+    function finals(G) {
+        return G.lines.map((l, i) => {
+            const a = G.ai && G.ai.lines[i];
+            return a && (!a.changes.length || G.acc[i]) ? a.revised : l.t;
+        });
+    }
+    function renderRelay() {
+        const s = relayState;
+        if (!s || !s.players) return;
+        const chips = $('relayChips'), box = $('groups');
+        chips.textContent = ''; box.textContent = '';
+
+        const ids = Object.keys(s.players);
+        const assigned = Object.keys(s.assign || {});
+        const guessed = ids.filter(u => (s.players[u].guess || '').trim()).length;
+        const gnums = [...new Set(assigned.map(u => s.assign[u].g))].sort((a, b) => a - b);
+
+        chips.appendChild(el('span', 'chip', '현재 단계: ' + (STEPS[s.step] || s.step)));
+        chips.appendChild(el('span', 'chip', '입장 ' + ids.length + '명'));
+        chips.appendChild(el('span', 'chip', '조 ' + gnums.length + '개 · 배정 ' + assigned.length + '명'));
+        chips.appendChild(el('span', 'chip', 'My Guess 작성 ' + guessed + '명'));
+        const waiting = ids.filter(u => !s.assign[u]);
+        if (waiting.length) chips.appendChild(el('span', 'chip warn', '조 미배정 ' + waiting.length + '명: ' + waiting.map(u => s.players[u].name).join(', ')));
+
+        if (!gnums.length) {
+            box.appendChild(el('div', 'empty', '아직 조가 편성되지 않았어요. (조 나누기는 relay.html의 선생님 화면에서 해요.)'));
+            return;
+        }
+
+        gnums.forEach(g => {
+            const G = (s.groups && s.groups[g]) || { chosen: null, plan: '', lines: [], ai: null, acc: {}, done: false, req: 0 };
+            const members = assigned.filter(u => s.assign[u].g === g).sort((a, b) => s.assign[a].s - s.assign[b].s);
+            const nameOf = u => (s.players[u] && s.players[u].name) || '?';
+            const bySeat = {};
+            members.forEach(u => { bySeat[s.assign[u].s] = nameOf(u); });
+
+            const card = el('div', 'card');
+            card.appendChild(el('div', 'gtitle', g + '조'));
+            card.appendChild(el('div', 'members', members.map(nameOf).join(', ')));
+
+            const st = el('div', 'chips');
+            st.appendChild(el('span', 'chip' + (G.lines.length === 4 ? ' good' : ''), '문장 ' + G.lines.length + '/4'));
+            if (G.req && !G.ai && G.lines.length === 4) st.appendChild(el('span', 'chip warn', 'AI 다듬기 요청 대기 중'));
+            if (G.ai) st.appendChild(el('span', 'chip', 'AI 결과 도착 · 수락 ' + Object.values(G.acc).filter(Boolean).length + '개'));
+            st.appendChild(el('span', 'chip' + (G.done ? ' good' : ''), G.done ? '제출 완료 ✅' : '미제출'));
+            card.appendChild(st);
+
+            const chosenP = G.chosen && s.players[G.chosen];
+            let sec = el('div', 'sec'); sec.appendChild(el('h4', '', '선정된 My Guess' + (chosenP ? ' (' + nameOf(G.chosen) + ')' : '')));
+            sec.appendChild(chosenP && chosenP.guess ? el('div', 'box', chosenP.guess) : el('div', 'box none', '아직 선정하지 않았어요.'));
+            card.appendChild(sec);
+
+            sec = el('div', 'sec'); sec.appendChild(el('h4', '', '모둠 줄거리'));
+            sec.appendChild(G.plan ? el('div', 'box', G.plan) : el('div', 'box none', '아직 없어요.'));
+            card.appendChild(sec);
+
+            sec = el('div', 'sec'); sec.appendChild(el('h4', '', '학생들이 쓴 문장 (수정 전)'));
+            const lbox = el('div', 'box');
+            if (!G.lines.length) lbox.appendChild(el('span', 'none', '아직 없어요.'));
+            G.lines.forEach((l, i) => {
+                const row = el('div', 'line');
+                row.appendChild(el('span', 'who', (i + 1) + '. ' + (bySeat[l.s] || '')));
+                row.appendChild(document.createTextNode(l.t));
+                lbox.appendChild(row);
+            });
+            sec.appendChild(lbox); card.appendChild(sec);
+
+            if (G.ai) {
+                sec = el('div', 'sec'); sec.appendChild(el('h4', '', 'AI가 다듬은 문장과 학생 선택'));
+                const abox = el('div', 'box');
+                G.ai.lines.forEach((a, i) => {
+                    const row = el('div', 'line');
+                    row.appendChild(el('span', 'who', (i + 1) + '.'));
+                    row.appendChild(el('span', 'rev', a.revised));
+                    if (a.changes.length) {
+                        const acc = !!G.acc[i];
+                        row.appendChild(el('span', 'tag ' + (acc ? 'yes' : 'no'), acc ? '수락' : '유지'));
+                        a.changes.forEach(c => row.appendChild(el('div', 'chg', '[' + c.type + '] ' + c.from + ' → ' + c.to + (c.why ? ' · ' + c.why : ''))));
+                    } else {
+                        row.appendChild(el('span', 'tag yes', '고친 곳 없음'));
+                    }
+                    abox.appendChild(row);
+                });
+                sec.appendChild(abox); card.appendChild(sec);
+
+                sec = el('div', 'sec'); sec.appendChild(el('h4', '', '최종본'));
+                sec.appendChild(el('div', 'box', finals(G).join(' ')));
+                card.appendChild(sec);
+            }
+            box.appendChild(card);
+        });
+        $('relayNote').textContent = '이 화면은 보기 전용이에요. 조 나누기, 단계 이동, AI 결과 붙여넣기는 relay.html 첫 화면의 “선생님이신가요?”를 눌러 들어가서 해 주세요.';
+    }
+
+    /* ===== 화면 동작 ===== */
+    function showTab(which) {
+        $('pie').classList.toggle('hide', which !== 'pie');
+        $('relay').classList.toggle('hide', which !== 'relay');
+        $('tabPie').classList.toggle('on', which === 'pie');
+        $('tabRelay').classList.toggle('on', which === 'relay');
+    }
+    $('tabPie').addEventListener('click', () => showTab('pie'));
+    $('tabRelay').addEventListener('click', () => showTab('relay'));
+    $('sortSeat').addEventListener('click', () => { sortMode = 'seat'; $('sortSeat').classList.add('on'); $('sortNew').classList.remove('on'); renderPie(); });
+    $('sortNew').addEventListener('click', () => { sortMode = 'new'; $('sortNew').classList.add('on'); $('sortSeat').classList.remove('on'); renderPie(); });
+    $('bigChk').addEventListener('change', e => $('pieTable').classList.toggle('big', e.target.checked));
+    $('hideChk').addEventListener('change', e => $('pieTable').classList.toggle('hideseat', e.target.checked));
+    $('goBtn').addEventListener('click', login);
+    $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>
+<!-- END OF FILE teacher.html -->
