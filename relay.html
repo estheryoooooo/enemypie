@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<script src="config.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Enemy Pie · Relay Writing 모둠 활동</title>
 <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -93,7 +92,7 @@ function ins(w){
 }
 const help=()=>'<div class="help"><h2>💡 쓰기 도우미: 이어 주는 말</h2><p class="muted">누르면 글을 쓰고 있는 칸에 들어가요. 문장 앞에 넣고, 뒤따르는 첫 글자는 소문자로 바꿔 보세요.</p>'+WORDS.map(g=>'<div class="chipRow"><span class="muted">'+g[0]+'</span>'+g[1].map(w=>'<button class="chip" onmousedown="event.preventDefault()" onclick="ins(\''+w[0]+'\')">'+w[0]+'<small>'+w[1]+'</small></button>').join('')+'</div>').join('')+'</div>';
 /* ★ Apps Script 배포 후 나온 웹 앱 주소(…/exec)를 붙여넣으세요 */
-const API=window.SERVER_URL||'',POLL=4000;
+const API='https://script.google.com/macros/s/AKfycbzdQ1KZgnpwZZAbXJubQeGJ2Twv_QY0e0qil8yyaHqMdmZwz9Vg9vzXvV1ao1FSH2tuHg/exec',POLL=4000;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const STEPS=['① 추측 나누기','② 이야기 선정','③ 한 줄씩 쓰기','④ AI에게 다듬기 부탁','⑤ 수정안 검수','⑥ 최종본 제출'];
@@ -122,8 +121,8 @@ async function tlogin(silent){
   const j=await send({a:'auth'});
   if(j&&j.ok){isT=true;sessionStorage.setItem('pw',p);render()}else{PW='';sessionStorage.removeItem('pw')}
 }
-if(API.indexOf('http')!==0)$('#app').innerHTML='<div class="card">config.js 파일에 Apps Script 웹 앱 주소를 넣어 주세요.</div>';
-else{poll();setInterval(poll,POLL);if(PW)tlogin(true)}
+if(API.indexOf('http')!==0)$('#app').innerHTML='<div class="card">index.html 안의 API 자리에 Apps Script 웹 앱 주소를 붙여넣어 주세요.</div>';
+else{poll();setInterval(poll,POLL);if(PW)tlogin(true);setInterval(()=>{const e=document.activeElement;if(!(e&&/TEXTAREA|INPUT|SELECT/.test(e.tagName)))render()},15000)}
 
 /* ---------- 도우미 ---------- */
 const P=()=>D.players||{},A=u=>(D.assign||{})[u];
@@ -134,7 +133,11 @@ const nm=(g,s)=>{const m=members(g).find(x=>x.s===s);return m?m.name:'Player '+s
 const para=a=>a.join(' ');
 const finals=g=>{const G=gd(g);return G.lines.map((l,i)=>{const a=G.ai&&G.ai.lines[i];return a&&(!a.changes.length||G.acc[i])?a.revised:l.t})};
 const decided=g=>{const G=gd(g);return G.ai&&G.ai.lines.every((l,i)=>!l.changes.length||G.acc[i]!=null)};
-const steps=()=>'<div class="steps">'+STEPS.map((t,i)=>'<span class="'+(i===D.step?'cur':i<D.step?'done':'')+'">'+t+'</span>').join('')+'</div>';
+const steps=c=>'<div class="steps">'+STEPS.map((t,i)=>'<span class="'+(i===c?'cur':i<c?'done':'')+'">'+t+'</span>').join('')+'</div>';
+const HINTS=['모둠원 모두가 추측을 저장해야 해요.','이야기를 선정하고 줄거리를 저장해 주세요.','문장 4개를 모두 써야 해요.','AI 수정이 끝나야 해요.','모든 수정안에 대해 선택해 주세요.'];
+const can=g=>{const G=gd(g);return [members(g).every(m=>m.guess),!!G.chosen&&!!(G.plan||'').trim(),G.lines.length>=4,!!G.ai,!!G.ai&&decided(g)][G.step||0]};
+const nextBtn=g=>{const G=gd(g),ok=can(g);return (G.step||0)>=5?'':'<div class="row"><button '+(ok?'':'disabled ')+'onclick="next()">다음 단계 →</button>'+(ok?'':'<span class="muted">'+HINTS[G.step||0]+'</span>')+'</div>'};
+const next=()=>send({a:'next'});
 const lineList=(g,ed)=>gd(g).lines.map((l,i)=>{
   const h='<b>'+(i+1)+'. '+esc(nm(g,l.s))+'</b>';
   if(ed&&S.editing===i)return '<div class="line">'+h+'<textarea id="ed" style="margin-top:6px" oninput="S.ed=this.value">'+esc(S.ed)+'</textarea><div class="row"><button onclick="saveEdit()">저장</button><button class="alt" onclick="cancelEdit()">취소</button></div></div>';
@@ -184,7 +187,7 @@ function norm(g,rows){
     if(rv!==o[i].t&&!ch.length)ch=[{type:'표현',from:'',to:'',why:'AI가 고친 문장이에요. 어디가 달라졌는지 찾아보세요.'}];
     return {revised:rv,changes:ch}})};
 }
-const askAI=()=>send({a:'askai'});
+async function askAI(){S.busy=true;render();await send({a:'askai'});S.busy=false;render()}
 async function sendAI(g){
   const t=S.pa[g]||'',a=t.indexOf('{'),b=t.lastIndexOf('}');
   try{const r=JSON.parse(t.slice(a,b+1));if(!Array.isArray(r.lines)||r.lines.length!==4)throw 0;
@@ -197,7 +200,7 @@ const submit=()=>{if(confirm('최종본을 제출할까요?'))send({a:'submit'})
 /* ---------- 선생님 동작 ---------- */
 const cfg=()=>send({a:'cfg',size:+$('#size').value});
 const split=()=>send({a:'split'});
-const setStep=n=>send({a:'step',step:n});
+const gstep=(g,n)=>send({a:'gstep',g,step:+n});
 const removeP=u=>{if(confirm('이 학생을 명단에서 뺄까요?'))send({a:'remove',u})};
 const moveP=(u,g)=>send({a:'move',u,g:+g});
 const resetAll=()=>{if(confirm('참가자와 모둠 기록을 모두 지울까요?'))send({a:'reset'})};
@@ -214,36 +217,38 @@ const idea=g=>{const G=gd(g),c=members(g).find(m=>m.u===G.chosen);return '<div c
 function stu(){
   const p=P()[me];
   if(!p||!p.name)return '<div class="card"><h2>👋 이름을 써 주세요</h2><input type="text" id="nm" maxlength="12" placeholder="내 이름"><div class="row"><button onclick="join()">입장하기</button></div></div><div style="text-align:center"><button class="link" onclick="tlogin()">선생님이신가요?</button></div>';
-  const a=A(me);
-  let h='<div class="card bar"><b>'+esc(p.name)+'</b><span class="badge">'+(a?a.g+'조 · Player '+a.s:'조 편성 대기 중')+'</span></div>'+steps();
+  const a=A(me),g=a?a.g:0,G=gd(g),st=G.step||0;
+  let h='<div class="card bar"><b>'+esc(p.name)+'</b><span class="badge">'+(a?a.g+'조 · Player '+a.s:'조 편성 대기 중')+'</span></div>'+steps(st);
   const gv=S.g1==null?p.guess||'':S.g1;
   const guessBox='<div class="card"><h2>✏️ My Guess</h2><p class="muted">Scene 8에서 Jeremy와 친구가 될 수 있었던 이유는 무엇일까요? (영어 또는 한국어)</p><textarea id="g1" oninput="S.g1=this.value" placeholder="I think ...">'+esc(gv)+'</textarea><div class="row"><button onclick="saveGuess()">저장하기</button></div></div>';
   if(!a)return h+guessBox+'<div class="card">🕐 선생님이 조를 편성하면 자동으로 화면이 바뀌어요. 그동안 내 추측을 먼저 써 두세요!</div>';
-  const g=a.g,G=gd(g),ms=members(g);
-  if(D.step===0){
+  const ms=members(g);
+  if(st===0){
     h+=guessBox+'<div class="card"><h2>💬 모둠원의 추측 읽고 이야기 나누기</h2>';
     ms.filter(m=>m.u!==me).forEach(m=>h+='<div class="guess"><label>'+esc(m.name)+'</label>'+(esc(m.guess)||'<span class="muted">아직 쓰지 않았어요</span>')+'</div>');
-    return h+'</div>';
+    return h+'</div>'+nextBtn(g);
   }
-  if(D.step===1){
+  if(st===1){
     h+='<div class="card"><h2>⭐ 우리 모둠 이야기 선정하기</h2><p class="muted">가장 재밌거나 그럴듯한 이야기를 함께 골라요.</p></div>';
     ms.forEach(m=>h+='<div class="guess '+(m.u===G.chosen?'sel':'')+'"><label>'+esc(m.name)+'</label>'+(esc(m.guess)||'<span class="muted">아직 쓰지 않았어요</span>')+'<div class="row"><button class="'+(m.u===G.chosen?'on':'alt')+'" onclick="choose(\''+m.u+'\')">'+(m.u===G.chosen?'⭐ 선정됨':'이 이야기로 선정')+'</button></div></div>');
-    return h+'<div class="card"><h2>🧩 이야기 함께 구상하기</h2><p class="muted">누가? 무슨 일이? 어떻게 친구가 되었나? (한국어 OK)</p><textarea id="plan" oninput="S.plan=this.value" placeholder="시작 → 가운데 → 끝">'+esc(S.plan==null?G.plan:S.plan)+'</textarea><div class="row"><button onclick="savePlan()">줄거리 저장</button></div></div>';
+    return h+'<div class="card"><h2>🧩 이야기 함께 구상하기</h2><p class="muted">누가? 무슨 일이? 어떻게 친구가 되었나? (한국어 OK)</p><textarea id="plan" oninput="S.plan=this.value" placeholder="시작 → 가운데 → 끝">'+esc(S.plan==null?G.plan:S.plan)+'</textarea><div class="row"><button onclick="savePlan()">줄거리 저장</button></div></div>'+nextBtn(g);
   }
-  if(D.step===2){
+  if(st===2){
     const n=G.lines.length,done=n>=4,t=n%ms.length+1;
     h+=idea(g)+'<div class="card"><h2>3. 한 줄씩 이어 써서 이야기 한 단락 만들기</h2><p class="muted" style="margin-bottom:8px">🔒 표시된 문장은 고정이에요. 그 사이에 들어갈 문장 4개를 한 줄씩 영어로 써요.</p><div class="who">'+ms.map(m=>'<span class="'+(!done&&m.s===t?'me':'')+'">'+esc(m.name)+'</span>').join('')+'</div>'+((!done||S.editing!=null)?help():'')+fix(OPEN)+lineList(g,true)
-    +(done?'<div class="turn">🎉 이야기 한 단락 완성! 선생님이 다음 단계를 열 때까지 기다려요.</div>':t===a.s?'<div class="turn me">✍️ 내 차례예요! 영어로 한 문장!</div><textarea id="dr" placeholder="Write one sentence in English." oninput="S.draft=this.value">'+esc(S.draft)+'</textarea><div class="row"><button onclick="addLine()">보내기</button></div>':'<div class="turn">⏳ '+esc(nm(g,t))+'의 차례예요. 다음 문장을 미리 생각해 두세요.</div>')+fix(END)+'</div>';
+    +(done?'<div class="turn me">🎉 이야기 한 단락 완성! 아래에서 다음 단계로 가요.</div>':t===a.s?'<div class="turn me">✍️ 내 차례예요! 영어로 한 문장!</div><textarea id="dr" placeholder="Write one sentence in English." oninput="S.draft=this.value">'+esc(S.draft)+'</textarea><div class="row"><button onclick="addLine()">보내기</button></div>':'<div class="turn">⏳ '+esc(nm(g,t))+'의 차례예요. 다음 문장을 미리 생각해 두세요.</div>')+fix(END)+'</div>'+nextBtn(g);
     return h;
   }
-  if(D.step===3){
-    h+='<div class="card"><h2>📖 우리가 쓴 글</h2>'+fix(OPEN)+lineList(g)+fix(END)+'</div><div class="card"><h2>4. AI에게 다듬기 부탁하기</h2><p class="muted">AI는 이야기를 새로 만들지 않아요. <b>문법</b>, <b>연결어</b>, 자연스러운 <b>표현</b>만 도와주는 학습 도우미예요. 버튼을 누르면 선생님께 요청이 전달돼요.</p>';
-    if(G.ai)return h+'<div class="turn me">✅ AI 결과가 도착했어요! 선생님이 다음 단계를 열 때까지 기다려요.</div></div>';
-    if(G.req)return h+'<div class="turn">⏳ 선생님께 요청을 보냈어요. AI가 다듬는 동안 기다려요.</div></div>';
-    return h+(G.lines.length>=4?'<div class="row"><button onclick="askAI()">🤖 AI에게 다듬기 부탁하기</button></div>':'<p class="muted">문장 4개를 모두 써야 해요.</p>')+'</div>';
+  if(st===3){
+    const aged=G.req&&Date.now()-G.req>90000,wait=S.busy||(G.req&&D.auto&&!G.aierr&&!aged);
+    h+='<div class="card"><h2>📖 우리가 쓴 글</h2>'+fix(OPEN)+lineList(g)+fix(END)+'</div><div class="card"><h2>4. AI로 수정하기</h2><p class="muted">AI는 이야기를 새로 만들지 않아요. <b>문법</b>, <b>연결어</b>, 자연스러운 <b>표현</b>만 도와주는 학습 도우미예요.</p>';
+    if(G.ai)return h+'<div class="turn me">✅ AI 수정이 끝났어요! 아래에서 다음 단계로 가요.</div></div>'+nextBtn(g);
+    if(wait)return h+'<div class="turn">⏳ AI가 우리 글을 읽고 있어요. 잠시만 기다려요…</div></div>';
+    if(G.req)return h+'<div class="turn">⏳ 선생님께 요청을 전달했어요. 조금만 기다려요.</div></div>';
+    return h+'<div class="row"><button onclick="askAI()">🤖 AI로 수정하기</button></div></div>';
   }
   if(!G.ai)return h+'<div class="card">AI 결과가 아직 없어요. 3·4단계를 먼저 끝내야 해요.</div>';
-  if(D.step===4){
+  if(st===4){
     h+='<div class="card"><h2>5. AI의 수정안 검수하기</h2><p class="muted">고친 부분과 이유를 읽고, <b>받아들일지 내 문장을 유지할지</b> 모둠이 함께 정해요.</p>'+(G.ai.tip?'<div class="chg">💬 '+esc(G.ai.tip)+'</div>':'')+'</div>';
     G.lines.forEach((l,i)=>{
       const x=G.ai.lines[i];
@@ -252,7 +257,7 @@ function stu(){
       else h+='<div><ins>'+esc(x.revised)+'</ins></div>'+x.changes.map(c=>'<div class="chg"><span class="t">'+esc(c.type||'표현')+'</span>'+(c.from||c.to?esc(c.from)+' → <b>'+esc(c.to)+'</b>':'')+'<div class="muted">'+esc(c.why)+'</div></div>').join('')+'<div class="row"><button class="'+(G.acc[i]===true?'on':'alt')+'" onclick="acc('+i+',true)">AI 수정 받아들이기</button><button class="'+(G.acc[i]===false?'off':'alt')+'" onclick="acc('+i+',false)">내 문장 유지</button></div>';
       h+='</div>';
     });
-    return h+(decided(g)?'<div class="turn me">✅ 검수를 마쳤어요! 선생님이 다음 단계를 열 때까지 기다려요.</div>':'<p class="muted">모든 수정안에 대해 선택해 주세요.</p>');
+    return h+(decided(g)?'<div class="turn me">✅ 검수를 마쳤어요! 아래에서 다음 단계로 가요.</div>':'')+nextBtn(g);
   }
   const n=G.ai.lines.filter(l=>l.changes.length).length,k=Object.values(G.acc).filter(Boolean).length;
   return h+'<div class="card"><h2>6. 최종본 제출하기</h2><p class="muted">AI 수정 전과 후를 모두 제출해요. (AI 수정을 받아들인 문장 '+k+' / '+n+')</p><div class="guess"><label>수정 전 (우리가 쓴 글)</label>'+esc(para(G.lines.map(l=>l.t)))+'</div><div class="guess sel"><label>수정 후 (검수를 마친 최종본)</label>'+esc(para(finals(g)))+'</div><div class="row">'+(G.done?'<span class="badge ok">✅ 제출 완료</span>':'<button onclick="submit()" '+(decided(g)?'':'disabled')+'>📤 제출하기</button>')+'<button class="alt" onclick="copyReport()">📋 복사하기</button></div></div>';
@@ -261,13 +266,13 @@ function stu(){
 function tea(){
   const ids=Object.keys(P()),un=ids.filter(u=>!A(u)),gs=groupIds();
   const opt=(arr,v)=>arr.map(n=>'<option '+(n==v?'selected':'')+'>'+n+'</option>').join('');
-  let h='<div class="card"><h2>👩‍🏫 선생님 화면</h2>'+steps()+'<div class="chips"><b>입장 '+ids.length+'명</b></div>';
+  let h='<div class="card"><h2>👩‍🏫 선생님 화면</h2>'+'<div class="chips"><b>입장 '+ids.length+'명</b></div>';
   h+='<div class="row"><label>모둠 인원 <select id="size" onchange="cfg()">'+opt([3,4,5],D.size)+'</select></label><button onclick="split()">🔀 무작위 조 편성</button></div>';
   if(ids.length){const n=Math.ceil(ids.length/D.size);h+='<p class="muted" style="margin-top:6px">지금 '+ids.length+'명 → 약 '+n+'개 조(조당 '+Math.floor(ids.length/n)+'~'+Math.ceil(ids.length/n)+'명)로 나뉘어요.</p>'}
   if(gs.length&&un.length)h+='<p class="muted">⚠️ 조가 없는 학생 '+un.length+'명이 있어요. 아래에서 조를 정해 주거나 다시 편성하세요.</p>';
-  h+='<p class="muted" style="margin-top:8px">학생 화면은 아래 단계를 따라가요.</p><div class="row">'+STEPS.map((t,i)=>'<button class="'+(i===D.step?'on':'alt')+'" onclick="setStep('+i+')">'+t+'</button>').join('')+'</div></div>';
-  const q=gs.filter(g=>{const G=gd(g);return G.req&&!G.ai}).sort((x,y)=>gd(x).req-gd(y).req);
-  h+='<div class="card"><h2>🤖 AI 다듬기 요청 ('+q.length+')</h2>'+(q.length?'<p class="muted">요청 순서대로 보여요. 프롬프트를 Claude에 넣고, 나온 JSON 코드 상자를 복사해 붙여넣으세요.</p>':'<p class="muted">학생들이 4단계에서 요청하면 여기에 나타나요.</p>');
+  h+='<p class="muted" style="margin-top:8px">각 모둠은 단계를 끝내는 대로 스스로 다음 단계로 넘어가요. 아래 모둠 카드에서 진행 단계를 볼 수 있어요.</p></div>';
+  const q=gs.filter(g=>{const G=gd(g);return G.req&&!G.ai&&(!D.auto||G.aierr||Date.now()-G.req>90000)}).sort((x,y)=>gd(x).req-gd(y).req);
+  h+='<div class="card"><h2>🤖 AI 다듬기 요청 ('+q.length+')</h2>'+(q.length?'<p class="muted">요청 순서대로 보여요. 프롬프트를 Claude에 넣고, 나온 JSON 코드 상자를 복사해 붙여넣으세요.</p>':'<p class="muted">자동 AI가 꺼져 있거나 실패한 모둠의 요청이 여기에 나타나요.</p>');
   q.forEach(g=>{const G=gd(g),tm=new Date(G.req).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     h+='<div class="guess"><label>'+g+'조 · '+tm+' 요청</label>'+esc(para(G.lines.map(l=>l.t)))+'<div class="row"><button class="alt" onclick="copyPrompt('+g+')">📋 프롬프트 복사</button><button onclick="openClaude('+g+')">🤖 Claude 열기</button></div><pre id="pp'+g+'" style="max-height:70px;overflow:auto;font-size:.75rem">'+esc(aiPrompt(g))+'</pre><textarea id="pa'+g+'" placeholder="Claude의 답(코드 상자)을 붙여넣기" oninput="S.pa['+g+']=this.value" style="min-height:60px">'+esc(S.pa[g]||'')+'</textarea><div class="row"><button class="on" onclick="sendAI('+g+')">✅ '+g+'조에 결과 보내기</button></div></div>'});
   h+='</div>';
@@ -277,8 +282,8 @@ function tea(){
   h+='<div class="row"><button class="bad" onclick="resetAll()">전체 초기화</button></div></div><div class="grid">';
   gs.forEach(g=>{
     const G=gd(g),ms=members(g),c=ms.find(m=>m.u===G.chosen),k=Object.values(G.acc).filter(Boolean).length,n=G.ai?G.ai.lines.filter(l=>l.changes.length).length:0;
-    h+='<div class="card"><div class="bar"><h2>'+g+'조</h2><span class="badge '+(G.done?'ok':'')+'">'+(G.done?'제출 완료':'문장 '+G.lines.length+'/4'+(G.ai?' · AI '+(decided(g)?'검수완료':'검수 '+Object.keys(G.acc).length+'/'+n):G.req?' · 🤖 요청':''))+'</span></div>';
-    h+='<div class="chips">'+ms.map(m=>'<span>P'+m.s+' '+esc(m.name)+'</span>').join('')+'</div><p class="muted" style="margin:6px 0">⭐ '+(c?esc(c.guess):'선정 전')+'</p>'+lineList(g);
+    h+='<div class="card"><div class="bar"><h2>'+g+'조</h2><span class="badge '+(G.done?'ok':'')+'">'+(G.done?'제출 완료':STEPS[G.step||0]+(G.step===2?' ('+G.lines.length+'/4)':G.step===4&&G.ai?' ('+(decided(g)?'완료':Object.keys(G.acc).length+'/'+n)+')':G.req&&!G.ai?' · 🤖':''))+'</span></div>';
+    h+='<div class="chips">'+ms.map(m=>'<span>P'+m.s+' '+esc(m.name)+'</span>').join('')+'</div><div class="row"><label class="muted">단계 이동 <select onchange="gstep('+g+',this.value)">'+STEPS.map((t,i)=>'<option value="'+i+'" '+(i===(G.step||0)?'selected':'')+'>'+t+'</option>').join('')+'</select></label></div><p class="muted" style="margin:6px 0">⭐ '+(c?esc(c.guess):'선정 전')+'</p>'+lineList(g);
     if(G.ai)h+='<div class="guess sel" style="margin-top:6px"><label>최종본 (AI 수락 '+k+'/'+n+')</label>'+esc(para(finals(g)))+'</div>';
     h+='</div>';
   });
@@ -288,3 +293,4 @@ function tea(){
 </script>
 </body>
 </html>
+<!-- END OF FILE relay.html -->
