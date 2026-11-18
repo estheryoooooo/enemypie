@@ -92,12 +92,12 @@ function ins(w){
 }
 const help=()=>'<div class="help"><h2>💡 쓰기 도우미: 이어 주는 말</h2><p class="muted">누르면 글을 쓰고 있는 칸에 들어가요. 문장 앞에 넣고, 뒤따르는 첫 글자는 소문자로 바꿔 보세요.</p>'+WORDS.map(g=>'<div class="chipRow"><span class="muted">'+g[0]+'</span>'+g[1].map(w=>'<button class="chip" onmousedown="event.preventDefault()" onclick="ins(\''+w[0]+'\')">'+w[0]+'<small>'+w[1]+'</small></button>').join('')+'</div>').join('')+'</div>';
 /* ★ Apps Script 배포 후 나온 웹 앱 주소(…/exec)를 붙여넣으세요 */
-const API='https://script.google.com/macros/s/AKfycbzdQ1KZgnpwZZAbXJubQeGJ2Twv_QY0e0qil8yyaHqMdmZwz9Vg9vzXvV1ao1FSH2tuHg/exec',POLL=4000;
+const API='여기에_웹앱_주소를_붙여넣으세요',POLL=4000;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const STEPS=['① 추측 나누기','② 이야기 선정','③ 한 줄씩 쓰기','④ AI에게 다듬기 부탁','⑤ 수정안 검수','⑥ 최종본 제출'];
 let D={v:-1,step:0,size:4,players:{},assign:{},groups:{}},isT=false,ready=false;
-const S={editing:null,ed:'',draft:'',g1:null,plan:null,paste:'',manual:false,mv:[],busy:false,pa:{}};
+const S={editing:null,ed:'',draft:'',g1:null,plan:null,paste:'',manual:false,mv:[],busy:false,pa:{},neterr:''};
 let me=localStorage.getItem('rid');
 if(!me){me='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);localStorage.setItem('rid',me)}
 let PW=sessionStorage.getItem('pw')||'';
@@ -187,7 +187,7 @@ function norm(g,rows){
     if(rv!==o[i].t&&!ch.length)ch=[{type:'표현',from:'',to:'',why:'AI가 고친 문장이에요. 어디가 달라졌는지 찾아보세요.'}];
     return {revised:rv,changes:ch}})};
 }
-async function askAI(){S.busy=true;render();await send({a:'askai'});S.busy=false;render()}
+async function askAI(){S.busy=true;S.neterr='';render();const j=await send({a:'askai'});S.neterr=!j?'서버에 연결하지 못했어요.':(j.err||'');S.busy=false;render()}
 async function sendAI(g){
   const t=S.pa[g]||'',a=t.indexOf('{'),b=t.lastIndexOf('}');
   try{const r=JSON.parse(t.slice(a,b+1));if(!Array.isArray(r.lines)||r.lines.length!==4)throw 0;
@@ -240,12 +240,12 @@ function stu(){
     return h;
   }
   if(st===3){
-    const aged=G.req&&Date.now()-G.req>90000,wait=S.busy||(G.req&&D.auto&&!G.aierr&&!aged);
+    const aged=G.req&&Date.now()-G.req>90000,wait=S.busy||(G.req&&!aged);
     h+='<div class="card"><h2>📖 우리가 쓴 글</h2>'+fix(OPEN)+lineList(g)+fix(END)+'</div><div class="card"><h2>4. AI로 수정하기</h2><p class="muted">AI는 이야기를 새로 만들지 않아요. <b>문법</b>, <b>연결어</b>, 자연스러운 <b>표현</b>만 도와주는 학습 도우미예요.</p>';
     if(G.ai)return h+'<div class="turn me">✅ AI 수정이 끝났어요! 아래에서 다음 단계로 가요.</div></div>'+nextBtn(g);
     if(wait)return h+'<div class="turn">⏳ AI가 우리 글을 읽고 있어요. 잠시만 기다려요…</div></div>';
-    if(G.req)return h+'<div class="turn">⏳ 선생님께 요청을 전달했어요. 조금만 기다려요.</div></div>';
-    return h+'<div class="row"><button onclick="askAI()">🤖 AI로 수정하기</button></div></div>';
+    const bad=G.aierr||(aged?'응답이 오지 않았어요. 서버 설정이나 권한을 확인해야 할 수 있어요.':'')||S.neterr;
+    return h+(bad?'<div class="turn">⚠️ AI 연결에 문제가 생겼어요. 다시 눌러 보세요.<div class="muted" style="font-weight:400">'+esc(bad)+'</div></div>':'')+'<div class="row"><button onclick="askAI()">🤖 '+(bad?'다시 시도하기':'AI로 수정하기')+'</button></div></div>';
   }
   if(!G.ai)return h+'<div class="card">AI 결과가 아직 없어요. 3·4단계를 먼저 끝내야 해요.</div>';
   if(st===4){
@@ -271,18 +271,13 @@ function tea(){
   if(ids.length){const n=Math.ceil(ids.length/D.size);h+='<p class="muted" style="margin-top:6px">지금 '+ids.length+'명 → 약 '+n+'개 조(조당 '+Math.floor(ids.length/n)+'~'+Math.ceil(ids.length/n)+'명)로 나뉘어요.</p>'}
   if(gs.length&&un.length)h+='<p class="muted">⚠️ 조가 없는 학생 '+un.length+'명이 있어요. 아래에서 조를 정해 주거나 다시 편성하세요.</p>';
   h+='<p class="muted" style="margin-top:8px">각 모둠은 단계를 끝내는 대로 스스로 다음 단계로 넘어가요. 아래 모둠 카드에서 진행 단계를 볼 수 있어요.</p></div>';
-  const q=gs.filter(g=>{const G=gd(g);return G.req&&!G.ai&&(!D.auto||G.aierr||Date.now()-G.req>90000)}).sort((x,y)=>gd(x).req-gd(y).req);
-  h+='<div class="card"><h2>🤖 AI 다듬기 요청 ('+q.length+')</h2>'+(q.length?'<p class="muted">요청 순서대로 보여요. 프롬프트를 Claude에 넣고, 나온 JSON 코드 상자를 복사해 붙여넣으세요.</p>':'<p class="muted">자동 AI가 꺼져 있거나 실패한 모둠의 요청이 여기에 나타나요.</p>');
-  q.forEach(g=>{const G=gd(g),tm=new Date(G.req).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    h+='<div class="guess"><label>'+g+'조 · '+tm+' 요청</label>'+esc(para(G.lines.map(l=>l.t)))+'<div class="row"><button class="alt" onclick="copyPrompt('+g+')">📋 프롬프트 복사</button><button onclick="openClaude('+g+')">🤖 Claude 열기</button></div><pre id="pp'+g+'" style="max-height:70px;overflow:auto;font-size:.75rem">'+esc(aiPrompt(g))+'</pre><textarea id="pa'+g+'" placeholder="Claude의 답(코드 상자)을 붙여넣기" oninput="S.pa['+g+']=this.value" style="min-height:60px">'+esc(S.pa[g]||'')+'</textarea><div class="row"><button class="on" onclick="sendAI('+g+')">✅ '+g+'조에 결과 보내기</button></div></div>'});
-  h+='</div>';
   h+='<div class="card"><h2>👥 학생 명단 (결석·지각 조정)</h2>';
   ids.forEach(u=>{const a=A(u),opts=[...gs,gs.length+1].map(g=>'<option value="'+g+'" '+(a&&a.g===g?'selected':'')+'>'+g+'조'+(g>gs.length?' (새 조)':'')+'</option>').join('');
     h+='<div class="pl"><span>'+esc(P()[u].name)+(a?'':' <small class="muted">(미배정)</small>')+'</span><select onchange="moveP(\''+u+'\',this.value)">'+(a?'':'<option value="" selected>조 선택</option>')+opts+'</select><button class="bad" onclick="removeP(\''+u+'\')">✕</button></div>'});
   h+='<div class="row"><button class="bad" onclick="resetAll()">전체 초기화</button></div></div><div class="grid">';
   gs.forEach(g=>{
     const G=gd(g),ms=members(g),c=ms.find(m=>m.u===G.chosen),k=Object.values(G.acc).filter(Boolean).length,n=G.ai?G.ai.lines.filter(l=>l.changes.length).length:0;
-    h+='<div class="card"><div class="bar"><h2>'+g+'조</h2><span class="badge '+(G.done?'ok':'')+'">'+(G.done?'제출 완료':STEPS[G.step||0]+(G.step===2?' ('+G.lines.length+'/4)':G.step===4&&G.ai?' ('+(decided(g)?'완료':Object.keys(G.acc).length+'/'+n)+')':G.req&&!G.ai?' · 🤖':''))+'</span></div>';
+    h+='<div class="card"><div class="bar"><h2>'+g+'조</h2><span class="badge '+(G.done?'ok':'')+'">'+(G.done?'제출 완료':STEPS[G.step||0]+(G.step===2?' ('+G.lines.length+'/4)':G.step===4&&G.ai?' ('+(decided(g)?'완료':Object.keys(G.acc).length+'/'+n)+')':G.aierr&&!G.ai?' · ⚠️ AI 오류':''))+'</span></div>';
     h+='<div class="chips">'+ms.map(m=>'<span>P'+m.s+' '+esc(m.name)+'</span>').join('')+'</div><div class="row"><label class="muted">단계 이동 <select onchange="gstep('+g+',this.value)">'+STEPS.map((t,i)=>'<option value="'+i+'" '+(i===(G.step||0)?'selected':'')+'>'+t+'</option>').join('')+'</select></label></div><p class="muted" style="margin:6px 0">⭐ '+(c?esc(c.guess):'선정 전')+'</p>'+lineList(g);
     if(G.ai)h+='<div class="guess sel" style="margin-top:6px"><label>최종본 (AI 수락 '+k+'/'+n+')</label>'+esc(para(finals(g)))+'</div>';
     h+='</div>';
