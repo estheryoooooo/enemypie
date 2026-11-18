@@ -92,7 +92,7 @@ function ins(w){
 }
 const help=()=>'<div class="help"><h2>💡 쓰기 도우미: 이어 주는 말</h2><p class="muted">누르면 글을 쓰고 있는 칸에 들어가요. 문장 앞에 넣고, 뒤따르는 첫 글자는 소문자로 바꿔 보세요.</p>'+WORDS.map(g=>'<div class="chipRow"><span class="muted">'+g[0]+'</span>'+g[1].map(w=>'<button class="chip" onmousedown="event.preventDefault()" onclick="ins(\''+w[0]+'\')">'+w[0]+'<small>'+w[1]+'</small></button>').join('')+'</div>').join('')+'</div>';
 /* ★ Apps Script 배포 후 나온 웹 앱 주소(…/exec)를 붙여넣으세요 */
-const API='여기에_웹앱_주소를_붙여넣으세요',POLL=4000;
+const API='https://script.google.com/macros/s/AKfycbzdQ1KZgnpwZZAbXJubQeGJ2Twv_QY0e0qil8yyaHqMdmZwz9Vg9vzXvV1ao1FSH2tuHg/exec',POLL=4000;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const STEPS=['① 추측 나누기','② 이야기 선정','③ 한 줄씩 쓰기','④ AI에게 다듬기 부탁','⑤ 수정안 검수','⑥ 최종본 제출'];
